@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 import anthropic
 
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env'))
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+load_dotenv(dotenv_path=_env_path, override=True)
 
 ANTHROPIC_API_KEY      = os.getenv("ANTHROPIC_API_KEY")
 MAX_TRADE_USD          = float(os.getenv("POLYMARKET_MAX_TRADE_EUR", 20))
