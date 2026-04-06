@@ -1,7 +1,8 @@
-# Environment variables - NEVER commit these
+# Environment variables and secrets - NEVER commit these
 .env
 .env.local
 *.env
+.mcp.json
 
 # Python
 __pycache__/
