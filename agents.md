@@ -8,6 +8,7 @@ Registry of agents (skills, automations, tools) in tiep-os.
 |-------|-----------|-------------|----------|
 | Polymarket Scanner | `skills/polymarket/` | Scans Polymarket for trading opportunities | Daily |
 | Polymarket Analyzer | `skills/polymarket/` | Analyzes market data and generates insights | On-demand |
+| Czech RE Scanner | `skills/czech-realestate/` | Scans sreality + bezrealitky + bazos for apartments, enriches with CZSO population + rental comps, Claude deep analysis with bull/bear cases | Daily |
 
 ## Adding a New Agent
 
