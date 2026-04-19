@@ -1,0 +1,6 @@
+last_scan.json
+last_enriched.json
+last_analysis.json
+.venv/
+__pycache__/
+*.pyc

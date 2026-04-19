@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRASILIA - Czech RE Investment Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-deep: #060a11;
+  --bg-base: #0b1120;
+  --bg-surface: #111b2e;
+  --bg-elevated: #162036;
+  --bg-hover: #1c2a44;
+  --border: #1e2d48;
+  --border-subtle: #152035;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8899b4;
+  --text-muted: #556a8a;
+  --accent-buy: #22c55e;
+  --accent-buy-dim: rgba(34,197,94,0.12);
+  --accent-buy-glow: rgba(34,197,94,0.25);
+  --accent-watch: #f59e0b;
+  --accent-watch-dim: rgba(245,158,11,0.12);
+  --accent-watch-glow: rgba(245,158,11,0.25);
+  --accent-skip: #ef4444;
+  --accent-skip-dim: rgba(239,68,68,0.10);
+  --accent-teal: #06b6d4;
+  --accent-teal-dim: rgba(6,182,212,0.10);
+  --accent-purple: #a78bfa;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Outfit', sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html { font-size: 14px; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(6,182,212,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(34,197,94,0.03) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 1500px; margin: 0 auto; padding: 0 24px; }
+
+/* ---- TOP BAR ---- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; border-bottom: 1px solid var(--border-subtle);
+  animation: fadeIn 0.5s var(--ease) forwards;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-buy));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--bg-deep);
+}
+.logo-text {
+  font-family: var(--font-mono); font-weight: 600; font-size: 15px;
+  letter-spacing: 3px; text-transform: uppercase;
+}
+.logo-text span { color: var(--text-muted); font-weight: 400; }
+.topbar-meta {
+  display: flex; align-items: center; gap: 20px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent-buy);
+  display: inline-block; margin-right: 6px; animation: pulse 2s infinite;
+}
+
+/* ---- HERO STATS ---- */
+.hero {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;
+  padding: 20px 0; animation: fadeIn 0.5s var(--ease) 0.1s both;
+}
+.stat-card {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.3s, transform 0.2s var(--ease);
+}
+.stat-card:hover { border-color: var(--border); transform: translateY(-1px); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--accent-teal); opacity: 0.5;
+}
+.stat-card.buy-accent::before { background: var(--accent-buy); }
+.stat-card.watch-accent::before { background: var(--accent-watch); }
+.stat-label {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+}
+.stat-value {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700; line-height: 1;
+}
+.stat-value .unit { font-size: 11px; font-weight: 400; color: var(--text-muted); margin-left: 2px; }
+.stat-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); margin-top: 5px; }
+
+/* ---- CONTROLS BAR ---- */
+.controls {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 14px 0 10px; border-top: 1px solid var(--border-subtle);
+  animation: fadeIn 0.5s var(--ease) 0.2s both;
+}
+.controls-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.controls-right { display: flex; align-items: center; gap: 10px; }
+
+.tabs {
+  display: flex; gap: 3px; background: var(--bg-surface);
+  border-radius: var(--radius-sm); padding: 3px; border: 1px solid var(--border-subtle);
+}
+.tab {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 4px; border: none;
+  background: transparent; color: var(--text-muted);
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.tab:hover { color: var(--text-secondary); }
+.tab.active { background: var(--bg-elevated); color: var(--text-primary); }
+.tab .count {
+  background: var(--bg-hover); padding: 1px 5px; border-radius: 3px; font-size: 10px;
+}
+.tab.active .count { background: var(--border); }
+.tab[data-filter="BUY"].active { color: var(--accent-buy); }
+.tab[data-filter="BUY"].active .count { background: var(--accent-buy-dim); color: var(--accent-buy); }
+.tab[data-filter="WATCH"].active { color: var(--accent-watch); }
+.tab[data-filter="WATCH"].active .count { background: var(--accent-watch-dim); color: var(--accent-watch); }
+.tab[data-filter="SKIP"].active { color: var(--accent-skip); }
+.tab[data-filter="SKIP"].active .count { background: var(--accent-skip-dim); color: var(--accent-skip); }
+
+.filter-select, .sort-select {
+  font-family: var(--font-mono); font-size: 11px;
+  background: var(--bg-surface); color: var(--text-secondary);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  padding: 7px 10px; cursor: pointer; outline: none;
+}
+.filter-select:focus, .sort-select:focus { border-color: var(--accent-teal); }
+
+/* ---- TABLE LAYOUT ---- */
+.listings-table {
+  width: 100%; border-collapse: separate; border-spacing: 0 6px;
+  animation: fadeIn 0.5s var(--ease) 0.3s both;
+}
+.listings-table th {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted);
+  text-align: left; padding: 6px 12px; white-space: nowrap;
+  cursor: pointer; user-select: none; transition: color 0.2s;
+}
+.listings-table th:hover { color: var(--text-secondary); }
+.listings-table th.sorted { color: var(--accent-teal); }
+.listings-table th.text-right { text-align: right; }
+.listings-table th .sort-arrow { font-size: 8px; margin-left: 3px; }
+
+/* ---- LISTING ROW ---- */
+.listing-row {
+  cursor: pointer; transition: transform 0.15s var(--ease);
+}
+.listing-row:hover { transform: translateX(2px); }
+.listing-row td {
+  background: var(--bg-surface); padding: 10px 12px;
+  border-top: 1px solid transparent; border-bottom: 1px solid transparent;
+  vertical-align: middle; transition: background 0.2s;
+}
+.listing-row:hover td { background: var(--bg-elevated); }
+.listing-row td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-left: 3px solid transparent; }
+.listing-row td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.listing-row.verdict-BUY td:first-child { border-left-color: var(--accent-buy); }
+.listing-row.verdict-WATCH td:first-child { border-left-color: var(--accent-watch); }
+.listing-row.verdict-SKIP td:first-child { border-left-color: var(--accent-skip); }
+.listing-row.verdict-SKIP td { opacity: 0.55; }
+.listing-row.verdict-SKIP:hover td { opacity: 0.8; }
+
+/* Verdict badge */
+.verdict-badge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 3px; display: inline-block; text-align: center;
+}
+.verdict-badge.BUY { background: var(--accent-buy-dim); color: var(--accent-buy); }
+.verdict-badge.WATCH { background: var(--accent-watch-dim); color: var(--accent-watch); }
+.verdict-badge.SKIP { background: var(--accent-skip-dim); color: var(--accent-skip); }
+.verdict-badge.none { background: var(--bg-hover); color: var(--text-muted); }
+
+/* Thumbnail */
+.listing-thumb {
+  width: 80px; height: 56px; border-radius: 4px;
+  object-fit: cover; background: var(--bg-hover);
+  display: block;
+}
+.listing-thumb-placeholder {
+  width: 80px; height: 56px; border-radius: 4px;
+  background: var(--bg-hover); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 20px; color: var(--text-muted);
+}
+
+/* Listing info cell */
+.listing-info { min-width: 0; }
+.listing-title {
+  font-weight: 600; font-size: 13px; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;
+}
+.listing-title a { color: inherit; text-decoration: none; }
+.listing-title a:hover { color: var(--accent-teal); text-decoration: underline; }
+.listing-loc {
+  font-size: 11px; color: var(--text-secondary); margin-top: 2px;
+  display: flex; align-items: center; gap: 6px;
+}
+.district-tag {
+  font-family: var(--font-mono); font-size: 8px; font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 3px;
+  background: var(--accent-teal-dim); color: var(--accent-teal);
+}
+.source-tag {
+  font-family: var(--font-mono); font-size: 8px;
+  padding: 1px 5px; border-radius: 3px;
+  background: var(--bg-hover); color: var(--text-muted);
+}
+.floor-warn {
+  font-family: var(--font-mono); font-size: 8px;
+  padding: 1px 5px; border-radius: 3px;
+  background: var(--accent-skip-dim); color: var(--accent-skip);
+}
+.dev-project-tag {
+  font-family: var(--font-mono); font-size: 8px; font-weight: 600;
+  padding: 1px 5px; border-radius: 3px;
+  background: rgba(168, 130, 255, 0.15); color: #a882ff;
+  cursor: pointer; text-decoration: none;
+}
+.dev-project-tag:hover { background: rgba(168, 130, 255, 0.25); }
+
+/* Metric cells */
+.cell-mono {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500; text-align: right;
+  white-space: nowrap;
+}
+.cell-sub {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 1px;
+  text-align: right;
+}
+.positive { color: var(--accent-buy); }
+.negative { color: var(--accent-skip); }
+.neutral { color: var(--accent-watch); }
+.muted { color: var(--text-muted); }
+
+/* Score ring */
+.score-ring { width: 38px; height: 38px; position: relative; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring circle { fill: none; stroke-width: 3; }
+.score-ring .bg { stroke: var(--border); }
+.score-ring .fg { stroke-linecap: round; transition: stroke-dashoffset 0.8s var(--ease); }
+.score-ring .score-text {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+}
+
+/* ---- EXPANDED DETAIL ROW ---- */
+.detail-row td {
+  background: var(--bg-base); padding: 0 !important;
+}
+.detail-content {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s var(--ease), padding 0.3s;
+}
+.detail-row.open .detail-content {
+  max-height: 1200px;
+  padding: 16px 20px 20px;
+}
+.detail-inner {
+  display: grid; grid-template-columns: 200px 1fr; gap: 20px;
+}
+
+/* Image gallery */
+.detail-gallery {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.detail-gallery img {
+  width: 100%; border-radius: var(--radius-sm);
+  object-fit: cover; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.detail-gallery img:hover { opacity: 0.85; }
+.detail-main-img {
+  height: 140px;
+}
+.detail-thumb-row {
+  display: flex; gap: 4px;
+}
+.detail-thumb-row img {
+  width: calc(33.3% - 3px); height: 44px;
+}
+
+/* Detail right side */
+.detail-right {}
+.detail-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.detail-chip {
+  background: var(--bg-surface); border-radius: 4px; padding: 8px 10px;
+  font-family: var(--font-mono); font-size: 10px;
+}
+.detail-chip .dl {
+  color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.5px; font-size: 9px;
+}
+.detail-chip .dv { color: var(--text-secondary); margin-top: 2px; }
+
+/* Claude analysis in detail */
+.claude-analysis {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.analysis-block {
+  background: var(--bg-surface); border-radius: var(--radius-sm); padding: 12px 14px;
+}
+.analysis-block-title {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 5px;
+}
+.analysis-block-title .dot { width: 5px; height: 5px; border-radius: 50%; }
+.bull .analysis-block-title { color: var(--accent-buy); }
+.bull .dot { background: var(--accent-buy); }
+.bear .analysis-block-title { color: var(--accent-skip); }
+.bear .dot { background: var(--accent-skip); }
+.analysis-block p { font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
+
+.analysis-meta {
+  grid-column: 1 / -1; display: grid;
+  grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+.meta-item {
+  background: var(--bg-surface); border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.meta-item-label {
+  font-family: var(--font-mono); font-size: 8px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;
+}
+.meta-item-value { font-size: 12px; line-height: 1.4; color: var(--text-secondary); }
+.tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 9px;
+  padding: 2px 6px; border-radius: 3px; margin: 2px 3px 2px 0;
+}
+.tag-risk { background: var(--accent-skip-dim); color: var(--accent-skip); }
+.tag-opp { background: var(--accent-buy-dim); color: var(--accent-buy); }
+
+.key-question {
+  grid-column: 1 / -1;
+  background: var(--accent-watch-dim); border: 1px solid rgba(245,158,11,0.15);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 12px; color: var(--accent-watch);
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.key-question .icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+.detail-link {
+  margin-top: 12px; text-align: right;
+}
+.detail-link a {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  color: var(--accent-teal); text-decoration: none;
+  padding: 6px 14px; border: 1px solid var(--accent-teal);
+  border-radius: var(--radius-sm); display: inline-block;
+  transition: all 0.2s;
+}
+.detail-link a:hover {
+  background: var(--accent-teal-dim); color: #fff;
+}
+
+/* ---- DISTRICT HEATMAP ---- */
+.heatmap-section {
+  padding: 28px 0; border-top: 1px solid var(--border-subtle);
+  animation: fadeIn 0.5s var(--ease) 0.4s both;
+}
+.section-title {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.section-title::before { content: ''; width: 12px; height: 2px; background: var(--accent-teal); }
+
+.heatmap-table {
+  width: 100%; border-collapse: separate; border-spacing: 0 4px;
+}
+.heatmap-table th {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted);
+  text-align: left; padding: 6px 14px;
+}
+.heatmap-table th:not(:first-child) { text-align: right; }
+.heatmap-table td {
+  padding: 10px 14px; font-family: var(--font-mono); font-size: 13px;
+  background: var(--bg-surface);
+}
+.heatmap-table td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); font-weight: 600; }
+.heatmap-table td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.heatmap-table td:not(:first-child) { text-align: right; }
+.heatmap-table tr { transition: transform 0.15s var(--ease); }
+.heatmap-table tr:hover { transform: translateX(3px); }
+.heatmap-bar {
+  display: inline-block; height: 4px; border-radius: 2px;
+  margin-right: 8px; vertical-align: middle;
+}
+
+/* ---- LOADING ---- */
+.loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 60vh; gap: 16px;
+}
+.loading-spinner {
+  width: 32px; height: 32px; border: 2px solid var(--border);
+  border-top-color: var(--accent-teal); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-text { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); letter-spacing: 1px; }
+
+.empty-state {
+  text-align: center; padding: 50px 20px; color: var(--text-muted);
+  font-family: var(--font-mono); font-size: 12px;
+}
+
+.footer {
+  border-top: 1px solid var(--border-subtle); padding: 16px 0 28px;
+  text-align: center; font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-muted); letter-spacing: 1px;
+  animation: fadeIn 0.5s var(--ease) 0.5s both;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1200px) {
+  .hero { grid-template-columns: repeat(3, 1fr); }
+  .detail-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .hero { grid-template-columns: repeat(2, 1fr); }
+  .controls { flex-direction: column; align-items: flex-start; }
+  .detail-inner { grid-template-columns: 1fr; }
+  .claude-analysis { grid-template-columns: 1fr; }
+  .analysis-meta { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading analysis data...</div>
+  </div>
+</div>
+
+<script>
+const DATA_URL = 'last_analysis.json';
+
+function fmt(n, d = 0) { return n == null ? 'N/A' : n.toLocaleString('en', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function fmtPct(n, d = 1) { return n == null ? 'N/A' : (n >= 0 ? '+' : '') + n.toFixed(d) + '%'; }
+function pctClass(n) { return n == null ? 'muted' : n > 0.5 ? 'positive' : n < -0.5 ? 'negative' : 'neutral'; }
+function discClass(n) { return n == null ? 'muted' : n < -5 ? 'positive' : n > 5 ? 'negative' : 'neutral'; }
+function yieldClass(n) { return n == null ? 'muted' : n >= 8 ? 'positive' : n >= 5 ? 'neutral' : 'negative'; }
+
+function getVerdict(item) {
+  return item.claude_verdict || (item.claude_analysis && item.claude_analysis.verdict) || null;
+}
+
+function scoreColor(score) {
+  if (score >= 65) return 'var(--accent-buy)';
+  if (score >= 50) return 'var(--accent-teal)';
+  if (score >= 35) return 'var(--accent-watch)';
+  return 'var(--accent-skip)';
+}
+
+function scoreRing(score) {
+  const r = 16, c = 2 * Math.PI * r;
+  const offset = c - (score / 100) * c;
+  const color = scoreColor(score);
+  return `<div class="score-ring">
+    <svg width="38" height="38" viewBox="0 0 38 38">
+      <circle class="bg" cx="19" cy="19" r="${r}"/>
+      <circle class="fg" cx="19" cy="19" r="${r}" stroke="${color}"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}"/>
+    </svg>
+    <div class="score-text" style="color:${color}">${Math.round(score)}</div>
+  </div>`;
+}
+
+function isGroundFloor(floor) {
+  if (!floor) return false;
+  const f = floor.toLowerCase();
+  if (['prizemi', 'přízemí', 'parter', 'suteren', 'suterén'].some(kw => f.includes(kw))) return true;
+  if (/^1[.\s]/.test(f) || f === '1') return true;
+  return false;
+}
+
+function thumbUrl(images) {
+  if (!images || !images.length) return null;
+  return images[0];
+}
+
+async function loadData() {
+  const resp = await fetch(DATA_URL);
+  return resp.json();
+}
+
+function computeStats(listings) {
+  const yields = listings.map(l => l.enriched?.gross_annual_yield_pct).filter(v => v != null);
+  const prices = listings.map(l => l.enriched?.price_per_m2).filter(v => v != null);
+  const verdicts = {};
+  listings.forEach(l => { const v = getVerdict(l) || 'UNSCORED'; verdicts[v] = (verdicts[v] || 0) + 1; });
+  const sources = {};
+  listings.forEach(l => { const s = l.enriched?.listing?.source || '?'; sources[s] = (sources[s] || 0) + 1; });
+  const districts = new Set(listings.map(l => l.enriched?.listing?.district).filter(Boolean));
+  return {
+    total: listings.length, medianYield: yields.length ? yields.sort((a,b)=>a-b)[Math.floor(yields.length/2)] : null,
+    yieldRange: yields.length ? [Math.min(...yields), Math.max(...yields)] : null,
+    above7: yields.filter(y => y >= 7).length, verdicts, sources, districtCount: districts.size,
+    avgDiscount: (() => { const d = listings.map(l => l.enriched?.price_discount_pct).filter(v => v != null); return d.length ? d.reduce((a,b)=>a+b,0)/d.length : null; })(),
+  };
+}
+
+function computeDistricts(listings) {
+  const map = {};
+  listings.forEach(l => {
+    const d = l.enriched?.listing?.district || '?';
+    if (!map[d]) map[d] = { name: d, listings: [], yields: [], prices: [], scores: [], popTrend: null };
+    map[d].listings.push(l);
+    map[d].scores.push(l.composite_score || 0);
+    if (l.enriched?.gross_annual_yield_pct != null) map[d].yields.push(l.enriched.gross_annual_yield_pct);
+    if (l.enriched?.price_per_m2 != null) map[d].prices.push(l.enriched.price_per_m2);
+    if (l.enriched?.population_trend_5y_pct != null) map[d].popTrend = l.enriched.population_trend_5y_pct;
+  });
+  return Object.values(map).sort((a,b) => median(b.scores) - median(a.scores));
+}
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b) => a-b);
+  return s[Math.floor(s.length/2)];
+}
+
+function renderApp(data) {
+  const allListings = data.listings || [];
+  const stats = computeStats(allListings);
+  const districts = computeDistricts(allListings);
+  const ts = data.analyzed_at ? new Date(data.analyzed_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+  // Collect unique districts and dispositions for filter dropdowns
+  const allDistricts = [...new Set(allListings.map(l => l.enriched?.listing?.district).filter(Boolean))].sort();
+  const allDispositions = [...new Set(allListings.map(l => l.enriched?.listing?.disposition).filter(Boolean))].sort();
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="logo">
+        <div class="logo-mark">B</div>
+        <div class="logo-text">BRASILIA <span>/ Czech RE Scanner</span></div>
+      </div>
+      <div class="topbar-meta">
+        <span><span class="live-dot"></span>Last scan: ${ts}</span>
+        <span>${Object.entries(stats.sources).map(([s,n]) => s + ' ' + n).join(' / ')}</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="stat-card">
+        <div class="stat-label">Properties</div>
+        <div class="stat-value">${stats.total}</div>
+        <div class="stat-sub">across ${stats.districtCount} districts</div>
+      </div>
+      <div class="stat-card buy-accent">
+        <div class="stat-label">Buy Signals</div>
+        <div class="stat-value" style="color:var(--accent-buy)">${stats.verdicts.BUY || 0}</div>
+        <div class="stat-sub">${stats.verdicts.WATCH || 0} on watchlist</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Median Yield</div>
+        <div class="stat-value">${stats.medianYield ? stats.medianYield.toFixed(1) : '?'}<span class="unit">%</span></div>
+        <div class="stat-sub">${stats.yieldRange ? stats.yieldRange[0].toFixed(1) + '% - ' + stats.yieldRange[1].toFixed(1) + '%' : ''}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Discount</div>
+        <div class="stat-value">${stats.avgDiscount != null ? stats.avgDiscount.toFixed(1) : '?'}<span class="unit">%</span></div>
+        <div class="stat-sub">vs local averages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Yield > 7%</div>
+        <div class="stat-value">${stats.above7}</div>
+        <div class="stat-sub">${stats.total ? Math.round(stats.above7 / stats.total * 100) : 0}% of listings</div>
+      </div>
+      <div class="stat-card watch-accent">
+        <div class="stat-label">Top Score</div>
+        <div class="stat-value">${allListings.length ? Math.round(Math.max(...allListings.map(l => l.composite_score || 0))) : 0}<span class="unit">/100</span></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="controls-left">
+        <div class="tabs" id="tabs">
+          <button class="tab active" data-filter="ALL">All <span class="count">${stats.total}</span></button>
+          <button class="tab" data-filter="BUY">Buy <span class="count">${stats.verdicts.BUY || 0}</span></button>
+          <button class="tab" data-filter="WATCH">Watch <span class="count">${stats.verdicts.WATCH || 0}</span></button>
+          <button class="tab" data-filter="SKIP">Skip <span class="count">${stats.verdicts.SKIP || 0}</span></button>
+        </div>
+        <select class="filter-select" id="districtFilter">
+          <option value="">All Districts</option>
+          ${allDistricts.map(d => `<option value="${d}">${d}</option>`).join('')}
+        </select>
+        <select class="filter-select" id="dispFilter">
+          <option value="">All Layouts</option>
+          ${allDispositions.map(d => `<option value="${d}">${d}</option>`).join('')}
+        </select>
+        <select class="filter-select" id="floorFilter">
+          <option value="">Any Floor</option>
+          <option value="no-ground">Exclude Ground Floor</option>
+          <option value="ground-only">Ground Floor Only</option>
+        </select>
+      </div>
+      <div class="controls-right">
+        <select class="sort-select" id="sortSelect">
+          <option value="score">Sort: Score</option>
+          <option value="yield">Sort: Yield</option>
+          <option value="price-asc">Sort: Price (low)</option>
+          <option value="price-desc">Sort: Price (high)</option>
+          <option value="discount">Sort: Discount</option>
+          <option value="size">Sort: Size</option>
+          <option value="price-m2">Sort: CZK/m2</option>
+        </select>
+      </div>
+    </section>
+
+    <table class="listings-table" id="listingsTable">
+      <thead>
+        <tr>
+          <th style="width:60px"></th>
+          <th style="width:90px"></th>
+          <th>Property</th>
+          <th class="text-right">Price</th>
+          <th class="text-right">Size</th>
+          <th class="text-right">CZK/m2</th>
+          <th class="text-right">Yield</th>
+          <th class="text-right">vs Local</th>
+          <th class="text-right">Est. Rent</th>
+          <th style="width:50px">Score</th>
+        </tr>
+      </thead>
+      <tbody id="listingsBody"></tbody>
+    </table>
+
+    <section class="heatmap-section">
+      <div class="section-title">District Heatmap</div>
+      <table class="heatmap-table">
+        <thead>
+          <tr><th>District</th><th>Count</th><th>Avg Score</th><th>Med. Yield</th><th>Med. CZK/m2</th><th>Pop. Trend</th></tr>
+        </thead>
+        <tbody>
+          ${districts.map(d => {
+            const avgScore = d.scores.length ? d.scores.reduce((a,b)=>a+b,0)/d.scores.length : 0;
+            const medYield = median(d.yields);
+            const medPrice = median(d.prices);
+            const barW = Math.max(8, avgScore * 1.2);
+            return `<tr>
+              <td><span class="heatmap-bar" style="width:${barW}px;background:${scoreColor(avgScore)}"></span>${d.name}</td>
+              <td>${d.listings.length}</td>
+              <td style="color:${scoreColor(avgScore)}">${avgScore.toFixed(1)}</td>
+              <td class="${yieldClass(medYield)}">${medYield ? medYield.toFixed(1) + '%' : 'N/A'}</td>
+              <td>${medPrice ? fmt(Math.round(medPrice)) : 'N/A'}</td>
+              <td class="${pctClass(d.popTrend)}">${d.popTrend != null ? fmtPct(d.popTrend) : 'N/A'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="footer">
+      BRASILIA CZECH RE SCANNER &middot; Data from sreality.cz + bezrealitky.cz + bazos.cz &middot; Analysis by Claude
+    </footer>
+  `;
+
+  // ---------- State ----------
+  let currentFilter = 'ALL';
+  let currentDistrict = '';
+  let currentDisp = '';
+  let currentFloor = '';
+  let currentSort = 'score';
+  let expandedIdx = null;
+  const tbody = document.getElementById('listingsBody');
+
+  function applyFilters(list) {
+    let f = [...list];
+    if (currentFilter !== 'ALL') {
+      f = f.filter(l => getVerdict(l) === currentFilter);
+    }
+    if (currentDistrict) {
+      f = f.filter(l => (l.enriched?.listing?.district || '') === currentDistrict);
+    }
+    if (currentDisp) {
+      f = f.filter(l => (l.enriched?.listing?.disposition || '') === currentDisp);
+    }
+    if (currentFloor === 'no-ground') {
+      f = f.filter(l => !isGroundFloor(l.enriched?.listing?.floor));
+    } else if (currentFloor === 'ground-only') {
+      f = f.filter(l => isGroundFloor(l.enriched?.listing?.floor));
+    }
+    return f;
+  }
+
+  function applySort(list) {
+    const copy = [...list];
+    switch (currentSort) {
+      case 'score': return copy.sort((a,b) => (b.composite_score||0) - (a.composite_score||0));
+      case 'yield': return copy.sort((a,b) => (b.enriched?.gross_annual_yield_pct||0) - (a.enriched?.gross_annual_yield_pct||0));
+      case 'price-asc': return copy.sort((a,b) => (a.enriched?.listing?.price_czk||0) - (b.enriched?.listing?.price_czk||0));
+      case 'price-desc': return copy.sort((a,b) => (b.enriched?.listing?.price_czk||0) - (a.enriched?.listing?.price_czk||0));
+      case 'discount': return copy.sort((a,b) => (a.enriched?.price_discount_pct||0) - (b.enriched?.price_discount_pct||0));
+      case 'size': return copy.sort((a,b) => (b.enriched?.listing?.size_m2||0) - (a.enriched?.listing?.size_m2||0));
+      case 'price-m2': return copy.sort((a,b) => (a.enriched?.price_per_m2||9999999) - (b.enriched?.price_per_m2||9999999));
+      default: return copy;
+    }
+  }
+
+  function renderListings() {
+    const filtered = applySort(applyFilters(allListings));
+    expandedIdx = null;
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No properties match these filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((item, i) => {
+      const l = item.enriched?.listing || {};
+      const e = item.enriched || {};
+      const v = getVerdict(item);
+      const img = thumbUrl(l.images);
+      const gf = isGroundFloor(l.floor);
+
+      return `<tr class="listing-row verdict-${v || 'none'}" data-idx="${i}">
+        <td>
+          <span class="verdict-badge ${v || 'none'}">${v || '--'}</span>
+        </td>
+        <td>
+          ${img
+            ? `<img class="listing-thumb" src="${img}" alt="" loading="lazy" onerror="this.style.display='none'">`
+            : `<div class="listing-thumb-placeholder">&#127968;</div>`
+          }
+        </td>
+        <td>
+          <div class="listing-info">
+            <div class="listing-title">
+              <a href="${l.url || '#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                ${l.disposition || ''} ${l.size_m2 ? l.size_m2 + ' m2' : ''} ${l.construction_type ? '/ ' + l.construction_type : ''} ${l.ownership ? '/ ' + l.ownership : ''}
+              </a>
+            </div>
+            <div class="listing-loc">
+              ${l.locality || ''}
+              <span class="district-tag">${l.district || ''}</span>
+              <span class="source-tag">${l.source || ''}</span>
+              ${l.developer_project ? `<a class="dev-project-tag" href="${l.developer_url || '#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${l.developer_project}">DEV: ${l.developer_project}</a>` : ''}
+              ${gf ? '<span class="floor-warn">Ground Floor</span>' : ''}
+              ${l.floor && !gf ? `<span class="source-tag">${l.floor}</span>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="cell-mono">${fmt(l.price_czk)}</div>
+        </td>
+        <td>
+          <div class="cell-mono">${l.size_m2 ? l.size_m2 + '' : 'N/A'}</div>
+          <div class="cell-sub">m2</div>
+        </td>
+        <td>
+          <div class="cell-mono">${e.price_per_m2 ? fmt(Math.round(e.price_per_m2)) : 'N/A'}</div>
+        </td>
+        <td>
+          <div class="cell-mono ${yieldClass(e.gross_annual_yield_pct)}">${e.gross_annual_yield_pct ? e.gross_annual_yield_pct.toFixed(1) + '%' : 'N/A'}</div>
+          <div class="cell-sub">${e.estimated_monthly_rent ? fmt(Math.round(e.estimated_monthly_rent)) + '/mo' : ''}</div>
+        </td>
+        <td>
+          <div class="cell-mono ${discClass(e.price_discount_pct)}">${e.price_discount_pct != null ? fmtPct(e.price_discount_pct) : 'N/A'}</div>
+        </td>
+        <td>
+          <div class="cell-mono">${e.estimated_monthly_rent ? fmt(Math.round(e.estimated_monthly_rent)) : 'N/A'}</div>
+        </td>
+        <td>
+          ${scoreRing(item.composite_score || 0)}
+        </td>
+      </tr>
+      <tr class="detail-row" data-detail="${i}">
+        <td colspan="10">
+          <div class="detail-content">
+            ${renderDetail(item)}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderDetail(item) {
+    const l = item.enriched?.listing || {};
+    const e = item.enriched || {};
+    const a = item.claude_analysis || {};
+    const hasAnalysis = !!a.verdict;
+    const images = l.images || [];
+
+    return `<div class="detail-inner">
+      <div class="detail-gallery">
+        ${images.length ? `
+          <img class="detail-main-img" src="${images[0]}" alt="" loading="lazy">
+          ${images.length > 1 ? `<div class="detail-thumb-row">
+            ${images.slice(1, 4).map(img => `<img src="${img}" alt="" loading="lazy">`).join('')}
+          </div>` : ''}
+        ` : '<div class="listing-thumb-placeholder" style="width:100%;height:140px;font-size:40px">&#127968;</div>'}
+      </div>
+      <div class="detail-right">
+        <div class="detail-grid">
+          <div class="detail-chip"><div class="dl">Construction</div><div class="dv">${l.construction_type || 'N/A'}</div></div>
+          <div class="detail-chip"><div class="dl">Condition</div><div class="dv">${l.condition || 'N/A'}</div></div>
+          <div class="detail-chip"><div class="dl">Ownership</div><div class="dv">${l.ownership || 'N/A'}</div></div>
+          <div class="detail-chip"><div class="dl">Floor</div><div class="dv">${l.floor || 'N/A'}${isGroundFloor(l.floor) ? ' &#9888;' : ''}</div></div>
+          <div class="detail-chip"><div class="dl">Energy</div><div class="dv">${l.energy_rating || 'N/A'}</div></div>
+          <div class="detail-chip"><div class="dl">Rent Comps</div><div class="dv">${e.rental_comp_count || 0} used</div></div>
+          <div class="detail-chip"><div class="dl">Population</div><div class="dv">${e.population ? fmt(e.population) : 'N/A'}</div></div>
+          <div class="detail-chip"><div class="dl">Pop. Trend</div><div class="dv ${pctClass(e.population_trend_5y_pct)}">${e.population_trend_5y_pct != null ? fmtPct(e.population_trend_5y_pct) : 'N/A'}</div></div>
+        </div>
+
+        ${hasAnalysis ? `
+          <div class="claude-analysis">
+            <div class="analysis-block bull">
+              <div class="analysis-block-title"><span class="dot"></span>Bull Case</div>
+              <p>${a.bull_case || 'N/A'}</p>
+            </div>
+            <div class="analysis-block bear">
+              <div class="analysis-block-title"><span class="dot"></span>Bear Case</div>
+              <p>${a.bear_case || 'N/A'}</p>
+            </div>
+            ${a.key_question ? `
+              <div class="key-question">
+                <span class="icon">&#9888;</span>
+                <span><strong>Key question:</strong> ${a.key_question}</span>
+              </div>
+            ` : ''}
+            <div class="analysis-meta">
+              <div class="meta-item">
+                <div class="meta-item-label">Risks</div>
+                <div class="meta-item-value">${(a.risks || []).map(r => '<span class="tag tag-risk">' + r + '</span>').join('') || 'N/A'}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-item-label">Opportunities</div>
+                <div class="meta-item-value">${(a.opportunities || []).map(o => '<span class="tag tag-opp">' + o + '</span>').join('') || 'N/A'}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-item-label">Projections</div>
+                <div class="meta-item-value">
+                  ${a.estimated_true_yield_after_costs_pct != null ? 'True yield: <strong>' + a.estimated_true_yield_after_costs_pct.toFixed(1) + '%</strong><br>' : ''}
+                  ${a.estimated_5yr_appreciation_pct != null ? '5yr growth: <strong>' + fmtPct(a.estimated_5yr_appreciation_pct, 0) + '</strong>' : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${a.vision ? `
+          <div class="claude-analysis" style="margin-top:10px">
+            <div class="analysis-block" style="grid-column:1/-1">
+              <div class="analysis-block-title" style="color:var(--accent-purple)"><span class="dot" style="background:var(--accent-purple)"></span>Photo Analysis - Visual Score: ${a.vision.visual_score || '?'}/10 - Renovation: ${a.vision.renovation_estimate || '?'}</div>
+              <p>${a.vision.condition_summary || ''}</p>
+              <div style="margin-top:8px">
+                ${(a.vision.red_flags || []).map(r => '<span class="tag tag-risk">' + r + '</span>').join('')}
+                ${(a.vision.green_flags || []).map(g => '<span class="tag tag-opp">' + g + '</span>').join('')}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${l.developer_project ? `
+          <div class="detail-link" style="margin-bottom:6px">
+            <a class="dev-project-tag" style="font-size:11px; padding:3px 8px" href="${l.developer_url || '#'}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+              Developer Project: ${l.developer_project} &#8599;
+            </a>
+          </div>
+        ` : ''}
+        <div class="detail-link">
+          <a href="${l.url || '#'}" target="_blank" rel="noopener">View on ${l.source || 'portal'} &#8599;</a>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ---------- Event handlers ----------
+
+  // Tab clicks
+  document.getElementById('tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    renderListings();
+  });
+
+  // Filter dropdowns
+  document.getElementById('districtFilter').addEventListener('change', e => { currentDistrict = e.target.value; renderListings(); });
+  document.getElementById('dispFilter').addEventListener('change', e => { currentDisp = e.target.value; renderListings(); });
+  document.getElementById('floorFilter').addEventListener('change', e => { currentFloor = e.target.value; renderListings(); });
+
+  // Sort
+  document.getElementById('sortSelect').addEventListener('change', e => { currentSort = e.target.value; renderListings(); });
+
+  // Row expand/collapse
+  document.getElementById('listingsBody').addEventListener('click', e => {
+    const row = e.target.closest('.listing-row');
+    if (!row) return;
+    // Don't toggle if clicking a link
+    if (e.target.tagName === 'A') return;
+
+    const idx = row.dataset.idx;
+    const detailRow = document.querySelector(`.detail-row[data-detail="${idx}"]`);
+    if (!detailRow) return;
+
+    // Close previously open
+    if (expandedIdx !== null && expandedIdx !== idx) {
+      const prev = document.querySelector(`.detail-row[data-detail="${expandedIdx}"]`);
+      if (prev) prev.classList.remove('open');
+    }
+
+    detailRow.classList.toggle('open');
+    expandedIdx = detailRow.classList.contains('open') ? idx : null;
+  });
+
+  renderListings();
+}
+
+// Boot
+loadData()
+  .then(renderApp)
+  .catch(err => {
+    document.getElementById('app').innerHTML = `
+      <div class="loading">
+        <div class="loading-text" style="color:var(--accent-skip)">Failed to load data: ${err.message}</div>
+        <div class="loading-text">Make sure last_analysis.json is in the same directory.</div>
+      </div>`;
+  });
+</script>
+</body>
+</html>

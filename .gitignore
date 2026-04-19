@@ -1,7 +1,8 @@
-# Environment variables - NEVER commit these
+# Environment variables and secrets - NEVER commit these
 .env
 .env.local
 *.env
+.mcp.json
 
 # Python
 __pycache__/
@@ -11,6 +12,9 @@ venv/
 
 # Node
 node_modules/
+
+# Scan output files (large, regenerated on each run)
+last_*.json
 
 # OS
 .DS_Store
